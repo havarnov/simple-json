@@ -47,6 +47,15 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
 
     fn next(&mut self) -> Option<char> {
         self.token = self.iter.next();
+        match self.token {
+            Some('\n') => {
+                self.line += 1;
+                self.column = 0;
+            }
+            _ => {
+                self.column += 1;
+            }
+        };
         self.token
     }
 
@@ -59,7 +68,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
             Some('"') => self.parse_string(),
             Some('[') => self.parse_list(),
             Some('{') => self.parse_object(),
-            Some(_) => Err(JsonError::ParseError(format!("unexpected character: {:?}", self.token))),
+            Some(_) => Err(JsonError::ParseError(format!("unexpected character ({:?}) at line: {:?}, column: {:?} ", self.token, self.line, self.column))),
             None => Err(JsonError::NotImplemented)
         }
     }
@@ -83,9 +92,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
             println!("{:?}", self.token);
             match self.token {
                 Some(']') => break,
-                Some(',') => {
-                    self.column += 1;
-                },
+                Some(',') => (),
                 Some(_) => list.push(try!(self.parse())),
                 _ => return Err(JsonError::NotImplemented)
             };
@@ -109,9 +116,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
                     };
                     map.insert(key, value);
                 },
-                Some(',') => {
-                    self.column += 1;
-                },
+                Some(',') => (),
                 _ => return Err(JsonError::NotImplemented)
             };
         }
@@ -146,7 +151,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
         let key = self.iter.by_ref().take_while(|c| *c != '"').collect();
 
         if self.next() != Some(':') {
-            Err(JsonError::ParseError(format!("Expected to find ':', but found: {:?}", self.token)))
+            Err(JsonError::ParseError(format!("Expected to find ':', but found: {:?} at line: {:?}, column: {:?}.", self.token, self.line, self.column)))
         } else {
             Ok(key)
         }
