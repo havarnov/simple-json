@@ -87,7 +87,14 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_string(&mut self) -> Result<Json, JsonError> {
-        Err(JsonError::NotImplemented)
+        match self.parse_string_raw() {
+            Ok(string) => Ok(Json::String(string)),
+            Err(err) => Err(err)
+        }
+    }
+
+    fn parse_string_raw(&mut self) -> Result<String, JsonError> {
+        Ok(self.iter.by_ref().take_while(|c| *c != '"').collect())
     }
 
     fn parse_list(&mut self) -> Result<Json, JsonError> {
@@ -153,7 +160,10 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_object_key(&mut self) -> Result<String, JsonError> {
-        let key = self.iter.by_ref().take_while(|c| *c != '"').collect();
+        let key = match self.parse_string_raw() {
+            Ok(key) => key,
+            Err(err) => return Err(err)
+        };
 
         if self.next() != Some(':') {
             Err(JsonError::ParseError(format!("Expected to find ':', but found: {:?} at line: {:?}, column: {:?}.", self.token, self.line, self.column)))
