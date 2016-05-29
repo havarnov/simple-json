@@ -51,7 +51,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse(&mut self) -> Result<Json, JsonError> {
-        println!("{:?}", self.token);
+        self.parse_whitespace();
         match self.token {
             Some('n') => self.parse_ident("ull", Json::Null),
             Some('t') => self.parse_ident("rue", Json::Boolean(true)),
@@ -59,11 +59,6 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
             Some('"') => self.parse_string(),
             Some('[') => self.parse_list(),
             Some('{') => self.parse_object(),
-            Some(' ') => {
-                self.column += 1;
-                self.next();
-                self.parse()
-            }
             Some(_) => Err(JsonError::ParseError(format!("unexpected character: {:?}", self.token))),
             None => Err(JsonError::NotImplemented)
         }
@@ -104,6 +99,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
 
         loop {
             self.next();
+            self.parse_whitespace();
             match self.token {
                 Some('}') => break,
                 Some('"') => {
@@ -116,14 +112,19 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
                 Some(',') => {
                     self.column += 1;
                 },
-                Some(' ') => {
-                    self.column += 1;
-                },
                 _ => return Err(JsonError::NotImplemented)
             };
         }
 
         Ok(Json::Object(map))
+    }
+
+    fn parse_whitespace(&mut self) {
+        while self.token == Some(' ') ||
+              self.token == Some('\n')
+        {
+            self.next();
+        }
     }
 
     fn parse_object_key_value(&mut self) -> Result<(String, Json), JsonError> {
