@@ -1,0 +1,6 @@
+[package]
+name = "simple-json"
+version = "0.1.0"
+authors = ["Håvar Nøvik <havar.novik@gmail.com>"]
+
+[dependencies]
