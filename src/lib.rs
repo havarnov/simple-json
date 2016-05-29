@@ -333,4 +333,30 @@ mod test {
         assert_eq!(res, Json::Object(map));
     }
 
+    #[test]
+    fn parse_complex_multiline_json_string() {
+        // arrange
+        let mut map = HashMap::new();
+        let mut inner_map = HashMap::new();
+        inner_map.insert("foo".to_string(), Json::Array(vec![Json::Null, Json::Boolean(false), Json::Boolean(true)]));
+        map.insert("1".to_string(), Json::Object(inner_map));
+        map.insert("2".to_string(), Json::Object(HashMap::new()));
+        map.insert("3".to_string(), Json::Boolean(false));
+
+        // act
+        let res = Json::from_str("
+{
+    \"1\":
+        {
+            \"foo\": [null, false, true]
+        },
+    \"2\": {},
+    \"3\": false
+}
+").unwrap();
+
+        // assert
+        assert_eq!(res, Json::Object(map));
+    }
+
 }
