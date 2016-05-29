@@ -68,9 +68,14 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
             Some('"') => self.parse_string(),
             Some('[') => self.parse_list(),
             Some('{') => self.parse_object(),
+            Some('0' ... '9') => self.parse_number(),
             Some(_) => Err(JsonError::ParseError(format!("unexpected character ({:?}) at line: {:?}, column: {:?} ", self.token, self.line, self.column))),
             None => Err(JsonError::NotImplemented)
         }
+    }
+
+    fn parse_number(&mut self) -> Result<Json, JsonError> {
+        Err(JsonError::NotImplemented)
     }
 
     fn parse_ident(&mut self, ident: &str, res: Json) -> Result<Json, JsonError> {
