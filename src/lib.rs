@@ -27,7 +27,8 @@ struct JsonBuilder<T> {
     iter: T,
     token: Option<char>,
     column: usize,
-    line: usize
+    line: usize,
+    eof_allowed: bool
 }
 
 impl<T: Iterator<Item = char>> JsonBuilder<T> {
@@ -36,7 +37,8 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
             iter: iter,
             token: None,
             column: 0,
-            line: 0
+            line: 0,
+            eof_allowed: true
         }
     }
 
@@ -98,6 +100,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_list(&mut self) -> Result<Json, JsonError> {
+        self.eof_allowed = false;
         let mut list = Vec::new();
         loop {
             self.next();
@@ -114,6 +117,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_object(&mut self) -> Result<Json, JsonError> {
+        self.eof_allowed = false;
         let mut map = HashMap::new();
 
         loop {
