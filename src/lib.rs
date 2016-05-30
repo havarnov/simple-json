@@ -154,7 +154,7 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
                 Some(']') => break,
                 Some(',') => (),
                 Some(_) => list.push(try!(self.parse())),
-                _ => return Err(JsonError::NotImplemented)
+                _ => return Err(JsonError::ParseError(format!("Unexpected character ({:?}) at line: {}, column: {}.", self.token, self.line, self.column)))
             };
         }
 
@@ -178,7 +178,8 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
                     map.insert(key, value);
                 },
                 Some(',') => (),
-                _ => return Err(JsonError::NotImplemented)
+                Some(_) => return Err(JsonError::ParseError(format!("Unexpected character ({:?}) at line: {}, column: {}.", self.token, self.line, self.column))),
+                None => return Err(JsonError::ParseError("Unexpected eof.".to_string()))
             };
         }
 
@@ -285,7 +286,7 @@ mod test {
         let res = Json::from_str("\"foo");
 
         // assert
-        assert_eq!(res, Err(JsonError::ParseError("Parsing error: unclosed string.".to_string())));
+        assert_eq!(res, Err(JsonError::ParseError("Unexpected eof.".to_string())));
     }
 
     #[test]
