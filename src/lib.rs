@@ -120,7 +120,29 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_string_raw(&mut self) -> Result<String, JsonError> {
-        Ok(self.iter.by_ref().take_while(|c| *c != '"').collect())
+        let mut string = "".to_string();
+        let mut escape = false;
+        loop {
+            self.next();
+            if escape {
+                match self.token {
+                    Some('"') => string.push('"'),
+                    Some('\\') => string.push('\\'),
+                    Some(_) => return Err(JsonError::ParseError("escape error.".to_string())),
+                    None => return Err(JsonError::ParseError("Unexpected eof.".to_string()))
+                }
+                escape = false;
+            } else {
+                match self.token {
+                    Some('"') => break,
+                    Some('\\') => escape = true,
+                    Some(c @ _) => string.push(c),
+                    None => return Err(JsonError::ParseError("Unexpected eof.".to_string()))
+                }
+            }
+        }
+
+        Ok(string)
     }
 
     fn parse_list(&mut self) -> Result<Json, JsonError> {
