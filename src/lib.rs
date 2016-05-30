@@ -77,7 +77,31 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
     }
 
     fn parse_number(&mut self) -> Result<Json, JsonError> {
-        Err(JsonError::NotImplemented)
+        let mut num = match self.token {
+            Some(d) => d.to_string(),
+            None => return Err(JsonError::ParseError("Unexpected eof.".to_string()))
+        };
+
+        loop {
+            self.next();
+            match self.token {
+                Some(d @ '0' ... '9') => num.push(d),
+                Some(',') => break,
+                Some(_) => return Err(JsonError::ParseError(format!("unexpected character ({:?}) at line: {:?}, column: {:?} ", self.token, self.line, self.column))),
+                None => {
+                    if self.eof_allowed {
+                        break;
+                    } else {
+                        return Err(JsonError::ParseError("Unexpected eof.".to_string()));
+                    }
+                }
+            }
+        }
+
+        match num.parse::<usize>() {
+            Ok(num) => Ok(Json::Number(num)),
+            Err(_) => Err(JsonError::ParseError(format!("Couldn't parse number: {}", num)))
+        }
     }
 
     fn parse_ident(&mut self, ident: &str, res: Json) -> Result<Json, JsonError> {
@@ -363,4 +387,14 @@ mod test {
         assert_eq!(res, Json::Object(map));
     }
 
+    #[test]
+    fn parse_simple_number() {
+
+        // act
+        let res = Json::from_str("9876").unwrap();
+
+
+        // assert
+        assert_eq!(res, Json::Number(9876));
+    }
 }
