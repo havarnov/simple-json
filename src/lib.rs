@@ -128,7 +128,6 @@ impl<T: Iterator<Item = char>> JsonBuilder<T> {
         let mut list = Vec::new();
         loop {
             self.next();
-            println!("{:?}", self.token);
             match self.token {
                 Some(']') => break,
                 Some(',') => (),
